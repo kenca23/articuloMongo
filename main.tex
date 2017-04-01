@@ -1,0 +1,529 @@
+\documentclass[conference,compsoc]{sty/IEEEtran}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{dirtytalk}
+
+% *** CITATION PACKAGES ***
+%
+\ifCLASSOPTIONcompsoc
+  \usepackage[nocompress]{cite}
+\else
+  \usepackage{cite}
+\fi
+
+
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+\usepackage{minted}
+\usepackage{array}
+\usepackage[tablename=Tabla]{caption}
+
+
+
+\begin{document}
+
+\title{Artículo \\ MongoDB}
+
+
+\author{\IEEEauthorblockN{Kenneth Calvo, Johan Durán, Esteban Quirós, Elzbieta Malinowski} 
+\IEEEauthorblockA{ 
+Facultad de Ciencias de la Computación e Informática\\
+Universidad de Costa Rica, San Pedro\\
+San José, Costa Rica\\
+\{keneth.calvo, johan.durancerdas, esteban.quirosaguilar, elzbieta.malinowski\}@ucr.ac.cr
+}
+}
+
+
+%\author{\IEEEauthorblockN{Kenneth Calvo}
+%\IEEEauthorblockA{Ciencias de la\\Computación e Informática\\
+%Universidad de Costa Rica\\
+%Montes de Oca, San José 8631--3367\\
+%Email: keneth.calvo@ucr.ac.cr}
+%\and
+%\IEEEauthorblockN{Johan Durán}
+%\IEEEauthorblockA{Ciencias de la\\Computación e Informática\\
+%Universidad de Costa Rica\\
+%Montes de Oca, San José 8966--9038\\
+%Email: johan.durancerdas@ucr.ac.cr}
+%\and
+%\IEEEauthorblockN{Esteban Quirós}
+%\IEEEauthorblockA{Ciencias de la\\Computación e Informática\\
+%Universidad de Costa Rica\\
+%Montes de Oca, San José 8304--5047\\
+%Email: esteban.quirosaguilar@ucr.ac.cr}}
+
+% make the title area
+\maketitle
+
+% As a general rule, do not put math, special symbols or citations
+% in the abstract
+\begin{abstract}
+The abstract goes here.
+\end{abstract}
+
+% no keywords
+
+% For peer review papers, you can put extra information on the cover
+% page as needed:
+% \ifCLASSOPTIONpeerreview
+% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
+% \fi
+%
+% For peerreview papers, this IEEEtran command inserts a page break and
+% creates the second title. It will be ignored for other modes.
+\IEEEpeerreviewmaketitle
+
+
+
+\section{Introduction}
+
+
+\section{Trabajos relacionados}
+Existen múltiples trabajos que realizan una comparación de las operaciones CRUD(Create, Read, Update y Delete) y de otras funcionalidades básicas de diferentes sistemas de bases de datos relacionales como MySQL\cite{CRUDMongoMySQL} y Oracle\cite{MongoDBvsOracle} con sus equivalentes en MongoDB. Se destaca la facilidad de uso, simplicidad y libertad de esquema como factores que podrían promover el uso de MongoDB con respecto a las bases de datos relacionales anteriormente mencionadas. 
+
+Además existen trabajos que comparan diferentes sistemas de bases de datos NoSQL y los tipos que existen\cite{MongovsCassandravsCouch}\cite{NoSQLDatabases}\cite{TypesNoSQLDBs}. Esto con el propósito de caracterizar los diferentes modelos de datos y dar una idea de cuales opciones de sistemas de bases de datos NoSQL pueden ser aplicables en los diferentes casos de uso.
+
+\subsection{Modeling and Querying Data in MongoDB}
+Arora y Aggarwal \cite{AroraAggarwal} presentan un estudio sobre el modelado de la base de datos en MongoDB comparado contra una base de datos SQL, en el presentan dos formas de modelar la base de datos, haciendo referencia entre colecciones o la representación de documentos anidados. Además de esto presenta como se hacen consultas básicas en Mongo y su contraparte en relacionales. Sin embargo, no presentan consultas más complejas donde se necesiten operadores como el aggregate, lookup, match, entre otros.
+
+\subsection{Data Modeling for NoSQL Document-Oriented Databases}
+
+Vera, Boaventura y más \textbf{(No se como referenciar a todos)} \cite{VeraBoa} proponen un modelaje estándar de datos NoSQL en forma de diagrama ER para bases orientadas a documentos. Este sistema será utilizado para modelar la base de datos en la que se va a trabajar en el caso de estudio.
+
+\section{Representación de datos en MongoDB}
+
+%En esta sección se presenta la base de datos que se va a utilizar para el desarrollo del artículo, además de la limpieza y organización que se le hicieron a los mismos.
+
+\subsection{Estructura de MongoDB}
+
+MongoDB es una base de datos cuyo modelo se basa en documentos. Un documento puede ser descrito como un conjunto ordenados de pares llave-valor representados de la siguiente forma.
+
+    \{ \say{Llave1} : Valor1, \say{Llave2} : Valor2 \}
+
+En el cual debe de tener una llave primaria \say{\_id} que lo distinga de los demás, la cual puede ser de cualquier tipo, pero por defecto es \say{ObjectId}, el cual es un objeto de 12 bytes compuesto por 4 bytes que representan el tiempo en segundos en que fue insertado, 3 bytes que identifica a la maquina, 2 bytes que representa al proceso que lo insertó y los últimos 3 bytes para un contador \cite{ObjectId}. Además se debe de considerar los siguientes factores para crear un documento. El primero y mas importante, dos documentos no pueden contener la misma llave primaria. El orden de las llaves importan, esto quiere decir que dos documentos que contienen las mismas llaves en distinto orden son considerados como documentos diferentes. Se hace distinción entre las letras mayúsculas y minúsculas, entre otros \cite{Chodorow}.
+
+Los valores asociados a las llaves en un documento puede ser de varios tipos como: hileras, números, arreglos e incluso se puede contener un documento, lo que se le conoce como documentos anidados.  Esto representa una ventaja en en el modelado de datos, ya que si se usara el modelo de bases de datos relacionales primero habría que pasar por un proceso de normalización el cual ocasionaría la creación de más tablas y separar datos que podrían considerarse como unidos \cite{Chodorow}.
+
+Los documentos son almacenados en una colección. Una colección es similar a una tabla en bases de datos relacionales y su función es almacenar datos que tengan un fin en común. Las colecciones en Mongo pueden ser de diferentes formas, esto significa que, los siguientes dos documentos pueden estar contenidos en la misma colección.
+
+\{ \say{Hola} : \say{Mundo}\}
+
+\{ \say{activo} : True \}
+
+Aunque sus componentes sean de diferentes tipos, hilera de caracteres y booleano, ambos pueden estar almacenados en la misma colección, lo que le da bastante libertad a los diseñadores de bases de datos para crear la estructura de la misma \cite{Chodorow}.
+
+Para realizar consultas que sean mas eficientes Mongo provee el uso de índices el cual ayuda a limitar la búsqueda para cierto valor. Sin definir un índice, se tendría que hacer una búsqueda exhaustiva por toda la colección para encontrar los datos que cumplen la condición dada. Por defecto Mongo indexa sobre el campo \say{\_id} pero se pueden definir sobre otra llave para mejorar las búsquedas más frecuentes \cite{indiceMongo}. 
+
+La tubería de agregación (aggregation pipeline) que ofrece MongoDB es un marco de referencia que permite a un documento de entrada pasar por una serie de etapas, en las cuales se le realizan distintas operaciones con el objetivo de generar uno nuevo documento que puede ser simplemente un cursor o una nueva colección. Un cursor es un puntero al conjunto de resultados de la consulta, con el cual el usuario puede iterar sobre cada uno de ellos \cite{aggregationMongo}.  %A modo de resumen y con el objetivo de lograr una mejor comprensión se brinda una pequeña definición de la funcionalidad de cada uno. 
+\textbf{/*En caso de conservarse la sección de doble lookup, descomentar las siguientes líneas donde se deben explicar los operadores utilizados*/}\par
+%\begin{itemize}
+    %\item match: Filtro inicial del documento, por ejemplo, considerar solamente documentos con identificador menor a 100.
+    %\item geoNear: Ordenar los documentos acorde a su proximidad geográfica. 
+    %\item project: Modificar la estructura del documento. Por ejemplo decidir cuales campos mostrar o no, a cuales darle un nuevo nombre o un nuevo valor. 
+    %\item lookup: Ejecutar un left outer join. Se toma el documento de entrada de la tubería y otro presente en el campo from del lookup.  
+    %\item unwind: En caso de que exista un documento con un arreglo dentro, con el operador unwind se puede separar y crear un nuevo documento para cada entrada del arreglo. 
+    %\item group: Agrupar los documentos por un campo llave que se debe pasar como parámetro al operador. Posteriormente se puede realizar operaciones de grupos sobre dichos resultados tal como agrupar por cliente y calcular el total de la orden.
+    %\item sample: Selección aleatorio de elementos presentes dentro del documento.
+    %\item sort: Ordenar ascendente o descendente mente el documento.
+    %\item skip: Realizar n cantidad de saltos sobre los elementos del documento.
+    %\item limit: Limitar el numero de documentos a retornar.
+    %\item redact: Restringir el contenido del documento, basado en información presente en el mismo documento.
+    %\item out: Almacenar los resultados en una nueva colección.
+%\end{itemize}
+La operación lookup es parte de las funciones de agregación de mongo. Esta operación simula un left outer join de la colección que llama a la función y la colección que se referencia dentro, que corresponde al campo from en la función. Este join se realiza con respecto a un campo de las dos colecciones con las que se realizará el join, los campos son llamados localField y foreignField.  El resultado es un documento casi idéntico al que se tenía anteriormente con la diferencia de que contiene un nuevo campo en forma de arreglo que contiene los campos de cada documento relacionado. La forma básica del lookup se puede apreciar en la figura \ref{fig:consulta-basica-lookup} \cite{lookupMongo}.
+
+\begin{figure}
+    \begin{minted}[frame=single,
+               framesep=3mm,
+               linenos=true,
+               xleftmargin=21pt,
+               tabsize=4]{js}
+db.Coleccion1.aggregate([
+ {$lookup:
+  {from: "Coleccion2",
+  localField: "campo_Coleccion1",
+  foreignField: "campo_Coleccion2",
+  as: "nombre_del_resultado"}
+ }
+])
+\end{minted}
+\caption{Consulta basica lookup} 
+\label{fig:consulta-basica-lookup}
+\end{figure}
+
+%\subsection{Limites de la tubería de agregación}
+
+A pesar de que el enfoque principal del articulo es el operador lookup, es importante recalcar las limitaciones que tiene la tubería dentro de la cual funciona. Se tienen dos limitaciones, la primera el tamaño del resultado y la segunda es con respecto al uso de memoria del computador en el que se desenvuelve. 
+Con respecto a el tamaño del resultado, MongoDB retorna un cursor o puede almacenar el resultado en una colección. Al realizarse alguna de estas operaciones el documento retornado debe ajustarse a las normas dadas para un documento de tipo BSON. Si por alguna razón el tamaño del documento excede ese limite el sistema responde con error. 
+El segundo aspecto en consideración es el uso de memoria del sistema, por defecto MongoDB ofrece un limite de 100 megabytes, y en caso de que la tubería exceda ese limite se puede producir un error. En caso de ser necesario existe la opción \textit{allowDiskUse} con el cual el sistema utiliza archivos temporales para completar la ejecución, claramente el uso de archivos externos puede traer graves efectos en el desempeño de la base de datos, sin embargo este criterio queda fuera del alcance del articulo.
+
+
+%Otro elemento de Mongo que es importante considerar es el cursor. Los resultados de una búsqueda en Mongo devuelven un cursor sobre los %datos para que el usuario pueda ver los resultados e iterar sobre los siguientes \cite{cursorMongo}. \textbf{NO SE QUE MÁS AGREGAR, TAL VEZ %ALGUNO ME PUEDA AYUDAR}.
+
+
+\subsection{Modelaje de los casos de estudio}
+Los datos usados en el proyecto, disponibles en el dataset MovieLens 10M DataSet\footnote{https://grouplens.org/datasets/movielens/}, se refieren a las películas y su valoración (rating). Se cuenta con  diez mil películas y diez millones de valoraciones relacionadas a las mismas. Las valoraciones son puntajes que críticos otorgan a las películas; cada película puede tener múltiples valoraciones asociados y además, cada película puede tener un número diferente de estas valoraciones.
+
+El modelo de datos utilizado para las pruebas con y sin índice consiste en dos colecciones. La primera es la colección de películas. Esta contiene el identificador de la película, título y géneros. La segunda es la colección de las valoraciones de las películas. Esta contiene identificador de usuario, identificador de película, valoración y timestamp. La relación de estas dos colecciones es de 1-N ya que cada película puede tener múltiples valoraciones. En la figura \ref{fig:pelicula-rating} se puede observar con más detalle el modelo de datos empleado.
+
+%Es importante mencionar que por el enfoque del trabajo no fue necesaria la limpieza de los datos. Para las pruebas del impacto de índices en el operador lookup se almacenarán ambos componentes en distintas colecciones.
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.9]{dosColecciones.PNG}
+\end{center}
+\caption{Modelo de documento de película y de ratings} 
+\label{fig:pelicula-rating}
+\end{figure}
+
+Por otro lado para las pruebas con documentos anidados solo va a consistir en una colección donde se toma como base el diseño propuesto por Vera, Boaventura y más \textbf{(No se como referenciar a todos)} \cite{VeraBoa} donde se considera una relación 1-N, como la que se tiene con películas y valoraciones y se adjunta el bloque de valoraciones que pertenecen a una película en un arreglo de documentos anidados. En la figura \ref{fig:documento-anidado} se puede observar con más detalle el modelo de datos empleado.
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.8]{anidados.PNG}
+\end{center}
+\caption{Modelo de documento película con documentos rating anidados} 
+\label{fig:documento-anidado}
+\end{figure}
+
+
+%\section{Ideas}
+
+
+%\subsection{Operador match, uso de índice}
+%Match es un operador de MongoDB que puede ser utilizado dentro de la tubería de agregación y permite reducir la cantidad de documentos a se procesados por las operaciones que le prosiguen en la tubería. Su finalidad es filtrar los documentos de interés excluyendo documentos innecesarios. Las formas alternativas a la utilización de match son crear colecciones de distintos tamaño o no realizar ningún filtro sobre la colección y con ello ejecutar la tubería con todos los documentos. La primera opción no es viable porque se tendrían muchos datos duplicados en la base de datos, se tienen tantas posibilidades de colecciones como documentos tenga la colección a dividir. Por otra parte, la segunda opción conlleva a que si se tienen 10 millones de documentos esa cantidad pasará por cada etapa de la tubería, lo cual trae consigo aumento en los tiempos de ejecución. Por las razones mencionadas el operador match es una opción muy viable al utilizar la tubería de agregación. Sin embargo, su utilización y eficiencia puede depender del uso de un índice sobre el campo de restricción. Por lo tanto, como caso de prueba se hace uso de la colección ratings con índice sobre el campo movieId en una colección y no indexado en una copia de la misma. Posteriormente, se ejecuta el script presente en la figura \ref{fig:consulta-match}, para valores de 1, 100, 1K, 3K, 4K, 5K, 6K, 7K, dicho script es ejecutado en ambas colecciones, indexada y no indexada sobre el campo movieId. Los resultados de dicha ejecución están presentes en las figuras \ref{fig:matchSinEscala}, \ref{fig:matchEscala}.\par 
+%\begin{figure}
+%    \begin{minted}[frame=single,
+%               framesep=3mm,
+%               linenos=true,
+%               xleftmargin=21pt,
+%               tabsize=4]{js}
+%    var ini = new Date();
+%    db.ratings.aggregate(
+%    [{
+%        $match:{"movieId":{$lte:tamano}}
+%    }]);
+%    var fin = new Date();
+%    print(fin-ini);
+%\end{minted}
+%\caption{Match con y sin índice sobre el campo id} 
+%\label{fig:consulta-match}
+%\end{figure}
+
+%En la figura \ref{fig:matchSinEscala} se observa que para restricciones de pocos elementos, los tiempos de ejecución para una colección sin índice sobre el campo de búsqueda son mucho mayores que los tiempos para la búsqueda con el índice. La razón de esta diferencia consiste en la necesidad de recorrer toda la colección en la búsqueda de documentos debido a que no se cuenta con el índice que ayudaría a detener el proceso de búsqueda. 
+
+%Al contrario, si el campo de búsqueda está indexado, el tiempo de ejecución disminuye por el factor de 2180400. A pesar de esta  diferencia en tiempo de ejecución, se puede ver en la figura \ref{fig:matchSinEscala} que al llegar aproximadamente a los 120000 elementos, el tiempo de ejecución para campo  indexado tiene comportamiento constante (ESTO ES RARO????) , mientras que en la ausencia de índice, el tiempo de ejecución disminuye conforme aumento la cantidad de documentos.  
+%\begin{figure}
+%\begin{center}
+%\includegraphics[scale=0.5]{MatchConSinIndice}
+%\end{center}
+%\caption{Tiempos de ejecución con y sin índice del operador match} 
+%\label{fig:matchSinEscala}
+%\end{figure}
+
+%Para mejorar visualización de esta situación, en la figura \ref{fig:matchSinEscala} se presentan los mismos resultados usando  escala logarítmica. Como se puede observar, al llegar a los 3 millones de documentos, se intercambian los papeles y la colección indexada tiene tiempos superiores a la no indexada. La razón es porque cuando se tiene índice se debe pasar por ese espacio de direccionamiento que lleva a los valores. A diferencia de este sin indexar solamente va recorriendo todos los documentos sin saber donde se encuentra. En búsquedas donde se desean pocos datos de una gran cantidad posibles, tener un índice es ideal para evitar recorrer toda la colección. Sin embargo para búsquedas de grandes cantidad de datos sobre colecciones grandes, es mejor evitar el índice. \par 
+%\begin{figure}
+%\begin{center}
+%\includegraphics[scale=0.5]{matchEscalaLogaritmicaG}
+%\end{center}
+%\caption{Tiempos de ejecución con y sin índice, escala logarítmica} 
+%\label{fig:matchEscala}
+%\end{figure}
+%Es notable que cuando los elementos buscados tienden a la cantidad total de documentos, es innecesario el índice. A pesar de eso, por definición primordial match es un operador para reducir la cantidad de documentos al mínimo. Por lo tanto, lo mencionado conlleva a que al utilizarse match se debería tener un índice asociado. En adición a pesar de que en cierto momento el índice puede ser mejorado por no tenerlo, también es claro la linealidad de tener búsquedas con índice lo cual brinda un gran nivel de confianza sobre las distintas consultas posibles a realizarse. 
+
+
+\section{Desempeño de Consultas}
+\subsection{Impacto de índice en el operador lookup}
+En esta sección del trabajo se busca analizar la diferencia en el tiempo de ejecución del operador lookup de la función aggregate cuando se utiliza y no se utiliza el índice en el foreign field. Esto con el propósito de determinar qué tan grande es la diferencia utilizando y sin utilizar índices. Además luego de conocer que tan grande es la diferencia determinar si en algún caso seria factible no utilizar un índice. A continuación se describirán los datos a utilizar, las pruebas a realizar y los resultados obtenidos.
+
+Se utilizará una base de datos que contiene siete colecciones. Cinco de Películas donde cada una contiene el id de la película, el nombre y los géneros. La diferencia entre las colecciones es la cantidad de documentos(películas) que contienen. Las colecciones contienen mil, dos mil, tres mil, cuatro mil y cinco mil películas respectivamente. Además la base de datos tiene una colección de ratings que contiene id del usuario, el id de la película, el puntaje y un timestamp de la crítica. Esta última colección contiene diez millones de documentos. Por último existe una colección idéntica a la anterior con la diferencia que esta tiene un índice para el atributo de movieId. Todo esto con base en el modelo de datos descrito en la sección 3.2.
+
+Se formularon 5 pruebas para cada uno de los casos, con y sin índice. Las pruebas se basan en la idea de realizar mediciones de tiempo para la operación join de la colección de películas con la colección de valoraciones (ratings) usando el atributo común que existe entre las colecciones (movieId). Se considera  mil, dos mil, tres mil, cuatro mil y cinco mil documentos de películas y 3081755, 5255829, 6856385, 7841885 y 8461625 de valoraciones, respectivamente como se puede ver en la tabla \ref{table:1}. Se formularon cinco pruebas para cada uno de los casos, con y sin índice, promediando el tiempo de ejecución obtenido en cada prueba para cada caso. Se tomó la decisión de no utilizar un número más grandes de películas debido a muy altos tiempo de ejecución obtenidos para las colecciones mencionadas anteriormente, por ejemplo, de casi cinco horas y media para el caso de cinco mil películas. 
+%Además se escoge cinco pruebas porque permite observar la tendencia general de los tiempo sin ser una cantidad exagerada de casos de prueba. 
+
+La  función presente en la figura \ref{fig:consulta-lookupIndices} presenta como se  genera la operación de lookup entre  las películas y sus valoraciones. Las líneas de 3-7 permiten generar el join de las películas con sus valoraciones respectivas.
+
+\begin{figure}
+    \begin{minted}[frame=single,
+               framesep=3mm,
+               linenos=true,
+               xleftmargin=21pt,
+               tabsize=4]{js}
+var before = new Date();
+var res = db.Peliculas_xk.aggregate
+    ([{$lookup:
+        {from: "Ratings_Index",
+        localField: "movieId",
+        foreignField: "movieId",
+        as: "join"}}
+]).toArray();
+var after = new Date();
+var time = after - before;
+print(time);
+\end{minted}
+\caption{Consulta de Lookup sobre moviId} 
+\label{fig:consulta-lookupIndices}
+\end{figure}
+
+A continuación se presenta una tabla en la que se pueden apreciar los resultados obtenidos en las pruebas. Los números representan la cantidad de segundos necesarios para realizar la consulta con los datos de la columna de películas:
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ c c c c }
+ Películas & Ratings & Con Índice & Sin Índice \\ 
+ 1.000 & 3.081.755 & 9,0 & 3302,0 \\  
+ 2.000 & 5.255.829 & 17,0 & 6542,0 \\
+ 3.000 & 6.856.385 & 22,0 & 9866,0 \\  
+ 4.000 & 7.841.885 & 25,0 & 13189,0 \\
+ 5.000 & 8.461.625 & 27,0 & 16599,0
+\end{tabular}
+\end{center}
+\caption{Tiempos de ejecución de lookup con índice y sin índice}
+\label{table:1}
+\end{table}
+
+Con estos resultados son notorios dos hechos particulares. El primero es que ambos tiempos de ejecución crecen de manera casi lineal. %Esto se puede observar dividiendo los tiempos de ejecución entre la cantidad de películas. Haciendo esto se puede notar que en general se mantiene un valor muy parecido de movieId por segundo para todos los valores de películas. Tanto usando índices como sin usarlos.
+La segunda es que la diferencia entre los tiempos de ejecución con y sin índices es notable llegando a tiempo de ejecución superar trescientas veces cuando se ejecutan las consultas sin índice en comparación con la ejecución en la presencia del índice. %Lo más importante de estos números es ver que un lookup sin índice puede, con datos suficientemente grandes, ser altamente ineficiente. Al punto que, dados los resultados obtenidos, podríamos calcular que para hacer un join usando solo una películas se duraría aproximadamente tres segundos. Una cantidad de tiempo intolerable para una aplicación actual. Por esto se podría decir para cualquier aplicación que vaya a utilizar la función de lookup debería utilizar un índice en el atributo usado en el join, a menos de que los datos sean extremadamente reducidos.
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5]{graficoTiempos}
+\end{center}
+\caption{Gráfica de tiempos de ejecución con y sin índice} 
+\label{fig:conysin_indice}
+\end{figure}
+
+\subsection{Lookup con índice vs documentos anidados}
+
+El uso del operador lookup y de índice sobre la llave foránea demostró un mayor rendimiento sobre las consultas como se pudo ver en la sub-sección. Además de ofrecer este operador, MongoDB también ofrece otras posibilidades para trabajar con estos datos, una de ellas es documentos anidados. Con documentos anidados se busca tener la menor cantidad de referencias externas a una colección con el fin de buscar una mayor ganancia en tiempo de ejecución. En el siguiente caso de estudio se utilizó el modelo de documentos anidados ofrecido por Mongo para determinar si el rendimiento en consultas es mejor que el dado por el lookup con índice que se estudió anteriormente. 
+
+
+%En esta sección se va a comparar los tiempos de ejecución de una consulta utilizando el operador lookup contra una consulta sobre documentos anidados. El fin de esta comparación es determinar, según los datos de la base de datos con la que se va a implementar, cual de los dos opciones de trabajar con los datos que ofrece Mongo es mas factible de utilizar, si la idea original de utilizar documentos anidados, o el operador lookup, implementado para cumplir la necesidad de realizar join en diferentes situaciones. Además, de encontrar una diferencia considerable entre las consultas, poder determinar en que casos podría ser recomendable utilizar documentos anidados y en cuales dejarlos en colecciones separadas y utilizar el operador lookup.
+
+Para realizar estas consultas se utilizará dos bases de datos. Una de ellas se caracteriza por usar la misma estructura de la subsección anterior, es decir, contiene dos colecciones de documentos de películas y de valoraciones, donde la ultima tiene un índice sobre el valor movieId. Por otra lado, la segunda base de datos incluye una sola colección de documentos anidados, donde los documentos de películas incluyen un arreglo de documentos de valoraciones correspondientes a cada película.  %A la hora de hacer el análisis de tiempos, las dos bases de datos van a contener los mismos datos con la única diferencia de que van a estar contenidos de forma diferente.
+
+Se realizaron cinco pruebas para cada uno de los casos, con lookup indexado y documentos anidados. Estas pruebas estan basadas en la idea de medir los tiempos de ejecución de la operación find en documentos anidados contra la operación lookup de la colección de películas con la colección de valoraciones sobre el campo movieId. Se considera mil, dos mil quinientos, cuatro mil, cinco mil quinientos y siete mil documentos de películas y 3081755, 6081110, 7841885, 8682809 y 9177819 valoraciones respectivamente, como se puede ver en la tabla \ref{table:2}. Se realizaron 5 pruebas para cada uno de los casos, promediando del tiempo de ejecución obtenido en cada prueba para cada caso. Para las pruebas con el operador lookup, se implementó la misma consulta realizada para el caso de índice de la subsección anterior. En la figura \ref{fig:consulta-anidado} presenta como se genera la búsqueda en las películas. En la linea 3 se realiza la comparación para solo obtener los resultados que sean menores o iguales a X en el campo movieId, donde X es dada como parámetro para elaborar la consulta. Y en las lineas 4-8 se deciden que campos se van a mostrar en el resultado
+
+\begin{figure}
+    \begin{minted}[frame=single,
+               framesep=3mm,
+               linenos=true,
+               xleftmargin=21pt,
+               tabsize=4]{js}
+var before = new Date();
+var res = db.peliculas.find(
+    { movieId: {$lte: X} }, 
+    {
+        movieId: 1,
+        title: 1,
+        ratings: 1,
+    }
+).toArray();
+var after = new Date();
+var time = after - before;
+print(time);
+\end{minted}
+\caption{Consulta sobre documentos anidados} 
+\label{fig:consulta-anidado}
+\end{figure}
+
+En la tabla \ref{table:2} se pueden apreciar los resultados obtenidos en las pruebas. Los números representan la cantidad de segundos que se necesitaron para finalizar la consulta sobre la colección. 
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ c c c c }
+ Películas & Ratings & Lookup indexado & Documentos anidados \\ 
+ 1.000 & 3.081.755 & 9,0 & 1,1 \\  
+ 2.500 & 6.081.110 & 20.0 & 2,4 \\
+ 4.000 & 7.841.885 & 25,0 & 2,8 \\  
+ 5.500 & 8.682.809 & 29,0 & 3,0 \\
+ 7.000 & 9.177.819 & 32,0 & 3,2 \\
+\end{tabular}
+\end{center}
+\caption{Tiempos de ejecución de documentos anidados y operador lookup}
+\label{table:2}
+
+\end{table}
+
+
+Con estos resultados se pueden apreciar dos factores particulares. Ambas gráficas crecen de manera casi lineal, como se puede apreciar en e la figura \ref{fig:anidados-lookup}. Por otro lado, la diferencia entre los resultados de tiempos de ejecución demuestra que es mas factible utilizar el modelo de documentos anidados de Mongo, ya que ofrece un menor tiempo de ejecución, reduciendo hasta en 10 veces el tiempo comparado a Lookup. Cabe rescatar que hay un factor a considerar para estos casos, el cual es velocidad de ejecución contra espacio en disco. Esto por que al tener documentos anidados, aunque aumente la velocidad de ejecución, puede darse el caso en donde se dupliquen documentos o información dentro de ellos. Estos factores se deben plantear a la hora de hacer el diseño de la base de datos y tomar una decisión dependiendo de que es más factible según las características de donde van a estar ubicadas las bases de datos.  
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5]{anidadosVSlookup}
+\end{center}
+\caption{Gráfica de tiempos de ejecución} 
+\label{fig:anidados-lookup}
+\end{figure}
+
+\subsection{Problemas asociados a la unión de más de dos colecciones}
+ En MongoDB la estructura de los documentos y las colecciones, tienen que estar diseñados pensando en las consultas que se van a realizar, ya que una mala estructuración  traer consigo tiempos de ejecución extensos. Por dicha razón, en esta sección se presenta un caso en el cual no existe una estructura acorde a la consulta que se desea realizar. \par
+
+La base de datos utilizada para realizar las pruebas de esta sub-sección contiene 3 colecciones, la colección de películas, ratings y la de usuarios. El resultado que se desea obtener es una colección en la cual cada documento contiene la información sobre la película con todos sus ratings asociados. Además, cada rating contiene datos sobre la persona que lo realizó. En la figura \ref{fig:consulta-doubleJoin} se presenta la consulta utilizada para obtener dicho resultado. 
+
+\begin{figure}
+    \begin{minted}[frame=single,
+               framesep=3mm,
+               linenos=true,
+               xleftmargin=21pt,
+               tabsize=4]{js}
+db.moviesIndex.aggregate([
+{
+    $match: {
+        movieId: {
+        $lte: tamano
+        }
+    }
+},
+{
+    $lookup: {
+    from: "ratingsIndex",
+    localField: "movieId",
+    foreignField: "movieId",
+    as: "Ratings"
+    }
+},
+{
+    $project:{
+	_id:0,movieId:1,
+	title:1,genres:1,
+	"Ratings.userId":1,
+	"Ratings.rating":1,
+	"Ratings.timestamp":1
+    }
+},
+{
+    $unwind:"$Ratings"
+},
+{
+    $lookup: {
+    from: "usuarios",
+    localField: "Ratings.userId",
+    foreignField: "userId",
+    as: "user"
+    }
+},
+{
+    $project:{
+	movieId:1,title:1,
+	genres:1,"Ratings.rating":1,
+	"Ratings.timestamp":1,
+	"Ratings.userId":"$user"
+    }
+},
+{
+    $group:{
+	_id:"$movieId",
+	"title":{$first:"$title"},
+	"genres":{$first:"$genres"},
+	"ratings":{$push:"$Ratings"}
+	}
+}],
+{    allowDiskUse:true    });    
+\end{minted}
+\caption{Película con ratings y usuarios asociados a cada rating} 
+\label{fig:consulta-doubleJoin}
+\end{figure}
+
+En un incio, líneas 2-7 reducen la cantidad de documentos para evitar recorrer toda la colección; en las líneas 9-16, se ejecuta el lookup para insertar dentro de cada película sus respectivos ratings. Posteriormente, mediante el operador de proyección se eligen los campos a mostrar y su estructura. En la línea 27, se utiliza el operador unwind, el cual toma de entrada un arreglo y lo separa en nuevos documentos. En el caso de ejemplo, se cuenta con los datos de la película (título, id, géneros) y un arreglo de elementos que se refieren a valoración asociada a dicha película; unwind permite crear un nuevo documento para cada una de estas valoraciones, es decir, por cada película se crean tantos pares película-valoración como valoraciones haya. Posteriormente, en las líneas 30-34 se lleva a cabo el segundo lookup, donde se inserta el usuario dentro de cada valoración. Finalmente, en líneas 46-51 se utiliza el operador group el cual permite agrupar de nuevo todas las películas anteriormente separadas por el operador unwind. Adicionalmente, en la línea 50 se utiliza el operador push que permite recrear  un arreglo parecido como se tuvo al inicio, solamente con un dato más que representa el usuario - emisor de la valoración. Además, como parámetro opcional, línea 54, se permite al sistema hacer uso de disco ya que la operación de agrupación consume todo el espacio de memoria reservado por mongoDB.  \par 
+
+En la figura \ref{fig:doubleJoinTiempos} se muestran los tiempos de ejecución para esta consulta con movieId 20, 40, 80, 200, 400. Se observa que con 400 películas los tiempos superan los 250 segundos, lo cual es un tiempo muy elevado para la cantidad de documentos retornados. Una modificación estructural simple es reemplazar el id de usuario de la colección ratings por los datos del usuario. Gracias a ello se pueden obtener los mismos resultados pero tiempos de ejecución cercanos a los mostrados en al sub-sección 4.6.
+Aspectos a tomar en consideración al realizar una consulta como la mostrada anteriormente, la base de datos utilizada tiene en promedio 1500 ratings para cada película, luego del primer lookup líneas 10-15, existen en promedio 7000 películas con 1500 ratings cada una. Posterior al unwind existen 7000*1500 documentos, que luego de insertar el usuario se realiza el proceso inverso, unirlos. Claramente, dicho proceso es altamente consumidor de recursos ya que se crea una gran cantidad de documentos solamente para insertar el usuario y posteriormente volver a su estado anterior. 
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5]{DobleLookup}
+\end{center}
+\caption{Tiempos de ejecución doble lookup} 
+\label{fig:doubleJoinTiempos}
+\end{figure}
+
+
+
+
+%\subsection{Cambios de Datos}
+%Inicialmente se había planteado utilizar tres volúmenes de datos, cada uno de ellos representado por una colección. El primero de un millón de ratings y cuatro mil películas. El segundo de diez millones de ratings y diez mil películas. El tercero de veinte millones de ratings y veintisiete mil películas. El primer inconveniente observado fue que si se utilizaban los sets de diez y veinte millones de manera total las pruebas serían muy extensas. Esto llevó a pensar en modificar el segundo set para generar dos sets de tres y cinco millones. Esta modificación implicaría revisar más a fondo los datos para asegurar que esta modificación no alterara los datos de maneras negativas. Por ejemplo eliminando más ratings ciertas películas que de otras. Dado esto se opto por usar solo el segundo set de datos y utilizar diferentes colecciones para manejar distintos número de películas del join. Permitiendo que las pruebas fueran menos extensas y además permitiendo que los cambios de volumen de datos solo se den en los tamaños de las colecciones.
+
+\section{Conclusión}
+The conclusion goes here.
+
+
+
+
+% conference papers do not normally have an appendix
+
+
+
+% use section* for acknowledgment
+\ifCLASSOPTIONcompsoc
+  % The Computer Society usually uses the plural form
+  \section*{Acknowledgments}
+\else
+  % regular IEEE prefers the singular form
+  \section*{Acknowledgment}
+\fi
+
+
+The authors would like to thank...
+
+
+
+%\printbibliography
+
+\begin{thebibliography}{1}
+
+\bibitem{IEEEhowto:kopka}
+H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
+  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+  
+\bibitem{ObjectId}
+MongoDB. (s.f.). \emph{MongoDB Documentation 3.4 - ObjectId} [Online]. Disponible en: https://docs.mongodb.com/manual/reference/method/ObjectId/
+
+\bibitem{AroraAggarwal}
+R. Arora y R. Aggarwal. 2013. \emph{Modeling and querying data in mongoDB}. International Journal of Scientific and Engineering Research (IJSER 2013). vol. 4, no. 7, Jul. 2013, pp. 141-144
+
+\bibitem{VeraBoa}
+H. Vera, W. Boaventura, M. Holanda, V. Guimaraes, y F. Hondo. (2015). \emph{Data Modeling for NoSQL Document-Oriented Databases}. En CEUR Workshop Proceedings Vol. 1478. pp. 129-135.
+
+\bibitem{Chodorow}
+K. Chodorow. \emph{MongoDB: The Difinive Guide}, 2nd ed. O'Reilly Media, 2013.
+
+\bibitem{cursorMongo}
+MongoDB. (s.f.). \emph{MongoDB Documentation 3.4 - Cursor} [Online]. Disponible en: https://docs.mongodb.com/v3.4/tutorial/iterate-a-cursor/
+
+\bibitem{indiceMongo}
+MongoDB. (s.f.). \emph{MongoDB Documentation 3.4 - Indexes} [Online]. Disponible en:https://docs.mongodb.com/v3.4/indexes/
+
+\bibitem{lookupMongo}
+MongoDB. (s.f.). \emph{MongoDB Documentation 3.4 - \$lookup (aggregation)} [Online]. Disponible en: https://docs.mongodb.com/manual/reference/operator/aggregation/lookup/\#lookup-aggregation
+
+\bibitem{CRUDMongoMySQL}
+C. Octavian, A. Boicea y I. Trifan. (2013). \emph{CRUD Operations in MongoDB}. In Proceedings of the 2013 international Conference on Advanced Computer Science and Electronics Information, Ed. Atlantis Press. pp. 347-350.
+
+\bibitem{aggregationMongo}
+MongoDB. (s.f.). \emph{MongoDB Documentation 3.4 - Aggregation} [Online]. Disponible en: https://docs.mongodb.com/manual/aggregation/
+
+\bibitem{MongoDBvsOracle}
+A. Boicea, F. Radulescu, y L. I. Agapin, (2012, September). \emph{MongoDB vs Oracle-Database Comparison}. In EIDWT (pp. 330-335).
+
+\bibitem{MongovsCassandravsCouch}
+C. Băzăr, y C. S. Iosif, (2014). \emph{The transition from rdbms to nosql. a comparative analysis of three popular non-relational solutions: Cassandra, mongodb and couchbase}. Database Syst J, 5(2), 49-59.
+
+\bibitem{NoSQLDatabases}
+A. B. M. Moniruzzaman, y S. A. Hossain, (2013). \emph{Nosql database: New era of databases for big data analytics-classification, characteristics and comparison}. arXiv preprint arXiv:1307.0191.
+
+\bibitem{TypesNoSQLDBs}
+A. Nayak, A. Poriya, y D. Poojary, (2013). \emph{Type of NOSQL databases and its comparison with relational databases}. International Journal of Applied Information Systems, 5(4), 16-19.
+
+\end{thebibliography}
+
+
+\end{document}
+
+
